@@ -22,12 +22,13 @@ from light.utils.metric import SegmentationMetric
 from light.data import get_segmentation_dataset
 from light.model import get_segmentation_model
 from light.nn import MixSoftmaxCrossEntropyLoss, MixSoftmaxCrossEntropyOHEMLoss
+from light.model.base_model.efficient_vit import EfficientViT
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Light Model for Segmentation')
     # model and dataset
-    parser.add_argument('--model', type=str, default='efficientnet',
+    parser.add_argument('--model', type=str, default='mobilenet',
                         help='model name (default: mobilenet)')
     parser.add_argument('--dataset', type=str, default='citys',
                         help='dataset name (default: citys)')
@@ -69,7 +70,7 @@ def parse_args():
     # checkpoint and log
     parser.add_argument('--resume', type=str, default=None,
                         help='put the path to resuming file if needed')
-    parser.add_argument('--save-dir', default='~/.torch/models',
+    parser.add_argument('--save-dir', default='/home/huadong.tang/Lightweight-Segmentation-master/models',
                         help='Directory for saving checkpoint models')
     parser.add_argument('--save-epoch', type=int, default=10,
                         help='save model every checkpoint-epoch')
@@ -124,9 +125,11 @@ class Trainer(object):
 
         # create network
         BatchNorm2d = nn.SyncBatchNorm if args.distributed else nn.BatchNorm2d
-        self.model = get_segmentation_model(args.model, dataset=args.dataset,
-                                            aux=args.aux, norm_layer=BatchNorm2d).to(self.device)
-
+        # self.model = get_segmentation_model(args.model, dataset=args.dataset,
+        #                                     aux=args.aux, norm_layer=BatchNorm2d).to(self.device)
+        self.model = EfficientViT(args.model).to(self.device)
+        ckpt = torch.load('/home/huadong.tang/Lightweight-Segmentation-master/b1.pt', map_location='cpu')
+        self.model.load_state_dict(ckpt, False)
         # resume checkpoint if needed
         if args.resume:
             if os.path.isfile(args.resume):
@@ -283,7 +286,7 @@ if __name__ == '__main__':
         synchronize()
     args.lr = args.lr * num_gpus
 
-    logger = setup_logger(args.model, args.log_dir, get_rank(), filename='{}_{}_log.txt'.format(
+    logger = setup_logger(args.model, args.log_dir, get_rank(), filename='{}_{}_log. '.format(
         args.model, args.dataset))
     logger.info("Using {} GPUs".format(num_gpus))
     logger.info(args)
