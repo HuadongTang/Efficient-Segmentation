@@ -5,3 +5,4 @@ from .shufflenet import *
 from .shufflenetv2 import *
 from .igcv3 import *
 from .efficientnet import *
+from .efficient_vit import *
