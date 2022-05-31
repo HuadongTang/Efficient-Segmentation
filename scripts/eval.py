@@ -16,7 +16,7 @@ from light.utils.metric import SegmentationMetric
 from light.utils.visualize import get_color_pallete
 from light.utils.logger import setup_logger
 from light.utils.distributed import synchronize, get_rank, make_data_sampler, make_batch_data_sampler
-
+from light.model.base_model.efficient_vit import EfficientViT
 from train import parse_args
 
 
@@ -43,7 +43,12 @@ class Evaluator(object):
         # create network
         self.model = get_segmentation_model(model=args.model, dataset=args.dataset,
                                             aux=args.aux, pretrained=True, pretrained_base=False)
+
+        # self.model = EfficientViT(args.model).to(self.device)
+        self.model.load_state_dict(torch.load('/home/huadong.tang/Lightweight-Segmentation-master/models/mobilenet_citys_best_model.pth'))
+
         if args.distributed:
+
             self.model = self.model.module
         self.model.to(self.device)
 
